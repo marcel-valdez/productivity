@@ -1,0 +1,234 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Timer Code - jsFiddle demo</title>
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.0.2.js"></script>
+<style type="text/css">
+body {
+  margin: 0;
+  padding: 0;
+  background: #f4f4f4;
+  font: 14px;
+  font-family: "Courier",Helvetica,Arial,sans-serif;
+}
+
+.inputcontent {  
+  height: 40px;
+}
+
+div {
+  float: left;
+}
+
+br {
+  clear: both;
+}
+
+.text-highlight {
+  text-shadow: 2px 2px 2px #FF0000;
+}
+
+.inputcontent input {
+  padding: 5px;
+  height: 40px;
+  width: 40px;
+  line-height: 18px;
+  border: 1px solid #c7c7c7;
+  -moz-border-radius:6px;
+  -webkit-border-radius:6px;
+  border-radius:6px;
+  color: #777;
+  text-align: center;
+  font-size: 14pt;
+}
+
+.orangebutton {
+  background: #ffc339; /* Old browsers */
+  background: -moz-linear-gradient(top, #ffc339 0%, #ff9b19 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffc339), color-stop(100%,#ff9b19)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #ffc339 0%,#ff9b19 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, #ffc339 0%,#ff9b19 100%); /* Opera11.10+ */
+  background: -ms-linear-gradient(top, #ffc339 0%,#ff9b19 100%); /* IE10+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffc339', endColorstr='#ff9b19',GradientType=0 ); /* IE6-9 */
+  background: linear-gradient(top, #ffc339 0%,#ff9b19 100%); /* W3C */
+  border: 1px solid #ff9b19;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  border-radius: 20px; 
+  line-height: 20px;
+  font-size: 16px;
+  padding: 6px 12px;
+  color: #fff;
+  text-shadow: -1px -1px #ff9b19;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.orangebutton:hover{
+  background: #ff9b19; /* Old browsers */
+  background: -moz-linear-gradient(top, #ff9b19 0%, #ffc339 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff9b19), color-stop(100%,#ffc339)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #ff9b19 0%,#ffc339 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, #ff9b19 0%,#ffc339 100%); /* Opera11.10+ */
+  background: -ms-linear-gradient(top, #ff9b19 0%,#ffc339 100%); /* IE10+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff9b19', endColorstr='#ffc339',GradientType=0 ); /* IE6-9 */
+  background: linear-gradient(top, #ff9b19 0%,#ffc339 100%); /* W3C */
+}
+
+</style>
+
+
+
+<script type="text/javascript">//<![CDATA[ 
+  $(document).ready(function () {
+    var state = {
+      RUNNING: 0,
+      PAUSED: 1,
+      FINISHED: 2,
+      INIT: 3
+    };
+
+    var app = {
+      state : state.INIT,
+      remainingTime : 60 * 15,
+      previousTime :60 * 15
+    }
+
+    var transitionState = function() {
+      switch(app.state) {
+        case state.INIT:
+        app.remainingTime = getTotalSeconds();
+        app.previousTime = app.remainingTime;
+        $('#ctrl').text("Pause");
+        app.state = state.RUNNING;
+        break;
+
+        case state.PAUSED:
+        $('#ctrl').text("Pause");
+        app.remainingTime = getTotalSeconds();
+        app.state = state.RUNNING;
+        break;
+
+        case state.RUNNING:
+        if(app.remainingTime > 0) {
+          $('#ctrl').text("Continue");
+          app.state = state.PAUSED;
+        } else {
+          $('#ctrl').text("Reset");
+          app.state = state.FINISHED;
+          $('input').addClass('text-highlight');
+        }
+        break;
+
+        case state.FINISHED:
+        app.state = state.INIT;
+        $('input').removeClass('text-highlight');
+        $('#ctrl').text("Start");
+        updateTimer(app.previousTime);
+      }
+    };
+
+    $('#ctrl').click(function () {
+      transitionState();
+    });
+
+    var getInputValue = function (id) {
+      var value = document.getElementById(id).value;
+      value = value === "" ? "0" : value;
+      return parseInt(value);
+    };
+
+    var setInputValue = function (id, _value) {
+      document.getElementById(id).value = _value;
+    };
+
+    var getTotalSeconds = function () {
+      return getInputValue('timer_hr') * 3600 + getInputValue('timer_min') * 60 + getInputValue('timer_sec');
+    };
+
+    var updateTimer = function (totalSeconds) {
+      if (totalSeconds >= 0) {
+        setInputValue('timer_hr', Math.floor(totalSeconds / 3600));
+        setInputValue('timer_min', Math.floor((totalSeconds % 3600) / 60));
+        setInputValue('timer_sec', totalSeconds % 60);
+      }
+    };
+
+    var flashTimer = function (flash) {
+      if (flash === true) {
+        setInputValue('timer_hr', 0);
+        setInputValue('timer_min', 0);
+        setInputValue('timer_sec', 0);
+      } else {
+        setInputValue('timer_hr', "");
+        setInputValue('timer_min', "");
+        setInputValue('timer_sec', "");
+      }
+    };
+
+    var beep = (function () {
+      var ctx = new(window.audioContext || window.webkitAudioContext);
+      return function () {
+        var type = 2;
+        var duration = 1000;
+        var osc = ctx.createOscillator();
+        osc.type = type;
+        osc.connect(ctx.destination);
+        osc.noteOn(0);
+        setTimeout(function () {
+          osc.noteOff(0);
+        }, duration);
+      };
+    })();
+
+    var timer = (function () {
+      var flash = true;
+      return function() { 
+        if (app.state === state.RUNNING) {
+          updateTimer(app.remainingTime);
+          if (app.remainingTime <= 0) {
+            setTimeout(function () {
+              beep();
+            }, 1);
+          }
+
+          if (app.remainingTime <= 0) {
+            transitionState();
+          }
+        }
+
+        if (app.state === state.FINISHED) {
+          flashTimer(flash);
+          flash = !flash;
+        }
+      };
+    })();
+
+    setInterval(timer, 500);
+    setInterval(function () {
+      if(app.state === state.RUNNING) {
+        app.remainingTime = app.remainingTime - 1;
+      }
+    }, 1000); //1000 will  run it every 1 second
+
+    updateTimer(app.remainingTime);
+  });
+
+</script>
+
+
+</head>
+<body style="">
+  <div class='inputcontent'>
+    <input id="timer_hr">:</input>
+  </div>
+  <div class='inputcontent'>
+  <input id="timer_min">:</input>
+  </div>
+  <div class='inputcontent'>
+  <input id="timer_sec"></input>
+  </div>
+  <button type="button" id='ctrl' class='orangebutton'>Start</button>  
+  <br />
+</body>
+</html>
